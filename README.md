@@ -1,2 +1,2 @@
 # train_imagenet_with_tf
-traing imagenet using tensorflow
+Train imagenet using tensorflow
