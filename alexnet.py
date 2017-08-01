@@ -3,7 +3,6 @@
 import tensorflow as tf
 
 
-
 def weight_init(shape, stddev, name):
     return tf.Variable(tf.truncated_normal(shape=shape, stddev=stddev, dtype=tf.float32), name=name)
 
@@ -18,7 +17,6 @@ def max_pool(x, size, stride, padding):
 
 def lrn(x, radius, alpha, beta, bias=1.0):
     return tf.nn.local_response_normalization(x, depth_radius=radius, alpha=alpha, beta=beta, bias=bias, name=name)
-
 
 
 class AlexNet(object):
