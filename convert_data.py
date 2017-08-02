@@ -56,9 +56,16 @@ class ImageReader(object):
         self._decode_jpeg_data = tf.placeholder(dtype=tf.string)
         self._decode_jpeg = tf.image.decode_jpeg(self._decode_jpeg_data, channels=3)
 
+        self._png_data = tf.placeholder(dtype=tf.string)
+        image = tf.image.decode_png(self._png_data, channels=3)
+        self._png_to_jpeg = tf.image.encode_jpeg(image, format='rgb', quality=100)
+
     def read_image_dims(self, sess, image_data):
         image = self.decode_jpeg(sess, image_data)
         return image.shape[0], image.shape[1]
+
+    def convert_png_to_jpeg(self, sess, image_data):
+        return sess.run(self._png_to_jpeg, feed_dict={self._png_data: image_data})
 
     def decode_jpeg(self, sess, image_data):
         image = sess.run(self._decode_jpeg,
@@ -143,7 +150,11 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, val_names_to_ids
                         # Read the filename:
                         print(filenames[i])
                         image_data = tf.gfile.FastGFile(filenames[i], 'r').read()
-                        height, width = image_reader.read_image_dims(sess, image_data)
+                        try:
+                            height, width = image_reader.read_image_dims(sess, image_data)
+                        except:
+                            image_data = image_reader.convert_png_to_jpeg(sess, image_data)
+                            height, width = image_reader.read_image_dims(sess, image_data)
 
                         if split_name == "train":
                             class_name = os.path.basename(os.path.dirname(filenames[i]))
