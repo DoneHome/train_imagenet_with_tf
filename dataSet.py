@@ -29,13 +29,17 @@ def parse_proto(serialized_example):
     """
     key_to_features = {
         'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-        'image/class/label': tf.FixedLenFeature([], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
+        'image/class/label': tf.FixedLenFeature([], tf.int64, default_value=tf.zeros([], dtype=tf.int64))
     }
 
     features = tf.parse_single_example(serialized_example, features=key_to_features)
 
-    image = tf.decode_raw(features['image/encoded'], tf.unit8)
-    label = tf.cast(features['image/class/label', tf.int32])
+    image = features['image/encoded']
+    image = tf.image.decode_jpeg(image, channels=3)
+    # Notice: if want to visulize the image, choose dtype: tf.unit8
+    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+
+    label = tf.cast(features['image/class/label'], tf.int32)
 
     return image, label
 

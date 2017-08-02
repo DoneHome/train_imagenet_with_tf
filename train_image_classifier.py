@@ -8,7 +8,7 @@ import math
 import os
 import random
 import sys
-from PIL import Image
+import cv2
 
 import tensorflow as tf
 
@@ -29,7 +29,7 @@ tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate')
 
 def main(argv=None):
     """ Train ImageNet for a number of steps. """
-    if not FLAGS.dataset.dir:
+    if not FLAGS.dataset_dir:
         raise ValueError('You must supply the dataset directory with --dataset_dir')
 
     with tf.Graph().as_default():
@@ -37,16 +37,15 @@ def main(argv=None):
             images, labels = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader)
 
         with tf.Session() as sess:
-            init_op = tf.initialize_all_variables()
+            init_op = tf.global_variables_initializer()
             sess.run(init_op)
 
             coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
+            threads = tf.train.start_queue_runners(sess=sess, coord=coord)
             for i in range(20):
                 example, l = sess.run([images,labels])
-                img=Image.fromarray(example, 'RGB')
-                img.save(cwd+str(i)+'_''Label_'+str(l)+'.jpg')
-                print(example, l)
+                file_path = './'+str(i)+'_''Label_'+ str(l) +'.jpg'
+                cv2.imwrite(file_path, example)
             coord.request_stop()
             coord.join(threads)
 
