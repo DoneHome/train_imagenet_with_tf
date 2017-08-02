@@ -43,10 +43,10 @@ _RANDOM_SEED = 0
 # The number of shards per dataset split.
 _NUM_SHARDS = {'train':100, 'validation':10}
 
+
 tf.app.flags.DEFINE_string('dataset_dir', None, '')
 tf.app.flags.DEFINE_string('train_label_dir', None, '')
 tf.app.flags.DEFINE_string('val_label_dir', None, '')
-
 
 class ImageReader(object):
     """Helper class that provides TensorFlow image coding utilities."""

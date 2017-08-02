@@ -11,7 +11,7 @@
 # Download the dataset
 #CUDA_VISIBLE_DEVICES=0 python convert_data.py --flagfile=conf/convert.conf
 
-CUDA_VISIBLE_DEVICES=3 python convert_data.py \
+CUDA_VISIBLE_DEVICES=0 python convert_data.py \
   --dataset_dir='/data/donghao1/project/imagenet/images' \
   --train_label_dir='/data/donghao1/project/imagenet/tool/train.txt' \
   --val_label_dir='/data/donghao1/project/imagenet/tool/val.txt'
@@ -19,7 +19,6 @@ CUDA_VISIBLE_DEVICES=3 python convert_data.py \
 # Train model
 CUDA_VISIBLE_DEVICES=0 python train_image_classifier.py \
   --dataset_dir='/data/donghao1/project/imagenet/images' \
-
 
 # Evaluate model
 #CUDA_VISIBLE_DEVICES=0 python eval_image_classifier.py --conf=conf/eval.conf
