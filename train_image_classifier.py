@@ -8,8 +8,11 @@ import math
 import os
 import random
 import sys
+from PIL import Image
 
 import tensorflow as tf
+
+import dataSet as DataProvider
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -31,7 +34,22 @@ def main(argv=None):
 
     with tf.Graph().as_default():
         with tf.device('/cpu:0'):
-            images, labels = DataProvider(FLAGS.dataset_dir)
+            images, labels = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader)
+
+        with tf.Session() as sess:
+            init_op = tf.initialize_all_variables()
+            sess.run(init_op)
+
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(coord=coord)
+            for i in range(20):
+                example, l = sess.run([images,labels])
+                img=Image.fromarray(example, 'RGB')
+                img.save(cwd+str(i)+'_''Label_'+str(l)+'.jpg')
+                print(example, l)
+            coord.request_stop()
+            coord.join(threads)
+
 
 if __name__ == '__main__':
     tf.app.run()
