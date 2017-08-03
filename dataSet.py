@@ -57,7 +57,7 @@ def preprocess_image(image):
     """
     """
     # Resize Image
-    image.set_shape([None, None, 3])
+    #image.set_shape([None, None, 3])
     distorted_image = tf.image.resize_images(image, [256, 256])
     # Randomly crop a [height, width] section of the image.
     distorted_image = tf.random_crop(distorted_image, [IMAGE_SIZE, IMAGE_SIZE,3])
@@ -102,6 +102,7 @@ def distort_input(dataset_dir, batch_size, num_reader, num_preprocess_thread):
 
     # create multiple threads to preprocess the image
     image = preprocess_image(image)
+    image = tf.image.convert_image_dtype(image, dtype=tf.uint8)
 
     return image, label
 
