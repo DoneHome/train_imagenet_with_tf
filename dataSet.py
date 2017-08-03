@@ -57,9 +57,10 @@ def preprocess_image(image):
     """
     """
     # Resize Image
+    image.set_shape([None, None, 3])
     distorted_image = tf.image.resize_images(image, [256, 256])
     # Randomly crop a [height, width] section of the image.
-    distorted_image = tf.random_crop(reshaped_image, [IMAGE_SIZE, IMAGE_SIZE,3])
+    distorted_image = tf.random_crop(distorted_image, [IMAGE_SIZE, IMAGE_SIZE,3])
     # Randomly flip the image horizontally.
     distorted_image = tf.image.random_flip_left_right(distorted_image)
     # Randomly distort color
