@@ -43,6 +43,16 @@ def parse_proto(serialized_example):
 
     return image, label
 
+def read_my_file_format(file_queue):
+    """
+    """
+    reader = tf.TFRecordReader()
+
+    _, serialized_example = reader.read(file_queue)
+    image, label = parse_proto(serialized_example)
+
+    return image, label
+
 def distort_input(dataset_dir, batch_size, num_reader):
     """
     """
@@ -50,13 +60,28 @@ def distort_input(dataset_dir, batch_size, num_reader):
     # TODO: use tf.train.match_filenames_once
     file_names = get_files_name(dataset_dir)
 
-    reader = tf.TFRecordReader()
-
     # create a queue that produces the filenames to read
     file_queue = tf.train.string_input_producer([file_names])
 
-    _, serialized_example = reader.read(file_queue)
-    image, label = parse_proto(serialized_example)
+    # create a queue that stores the files that read by readers
+    example_queue = tf.RandomShuffleQueue(
+            capacity = 20 * batch_size,
+            min_after_dequeue = 10 * batch_size,
+            )
+
+    # create multiple readers to populate the Example Queue
+    enqueue_ops = []
+
+    for i in range(num_reader):
+        image, label = read_my_file_format(file_queue)
+        enqueue_ops.append(example_queue.enqueue([image, label]))
+
+    tf.train.queue_runner.add_queue_runner(
+        tf.train.queue_runner.QueueRunner(example_queue, enqueue_ops))
+
+    image, label = example_queue.dequeue()
+
+    # create multiple threads to preprocess the image
 
     return image, label
 
