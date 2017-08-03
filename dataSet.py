@@ -53,7 +53,18 @@ def read_my_file_format(file_queue):
 
     return image, label
 
-def distort_input(dataset_dir, batch_size, num_reader):
+def preprocess_image(image):
+    """
+    """
+
+    # Randomly crop a [height, width] section of the image.
+    distorted_image = tf.random_crop(reshaped_image, [IMAGE_SIZE, IMAGE_SIZE,3])
+    # Randomly flip the image horizontally.
+    distorted_image = tf.image.random_flip_left_right(distorted_image)
+
+    return distorted_image
+
+def distort_input(dataset_dir, batch_size, num_reader, num_preprocess_thread):
     """
     """
 
@@ -66,7 +77,7 @@ def distort_input(dataset_dir, batch_size, num_reader):
     # create a queue that stores the files that read by readers
     example_queue = tf.RandomShuffleQueue(
             capacity = 20 * batch_size,
-            min_after_dequeue = 10 * batch_size,
+            min_after_dequeue = 5 * batch_size,
             dtypes = [tf.float32, tf.int32]
             )
 
@@ -83,6 +94,7 @@ def distort_input(dataset_dir, batch_size, num_reader):
     image, label = example_queue.dequeue()
 
     # create multiple threads to preprocess the image
+    image = preprocess_image(image)
 
     return image, label
 
