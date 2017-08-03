@@ -9,3 +9,6 @@ Train imagenet using tensorflow
 ## Readers for the file
 ## Decoder for a record read by the reader
 ## Example queue
+
+# Reference:
+https://www.tensorflow.org/programmers_guide/reading_data

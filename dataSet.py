@@ -61,12 +61,13 @@ def distort_input(dataset_dir, batch_size, num_reader):
     file_names = get_files_name(dataset_dir)
 
     # create a queue that produces the filenames to read
-    file_queue = tf.train.string_input_producer([file_names])
+    file_queue = tf.train.string_input_producer(file_names)
 
     # create a queue that stores the files that read by readers
     example_queue = tf.RandomShuffleQueue(
             capacity = 20 * batch_size,
             min_after_dequeue = 10 * batch_size,
+            dtypes = [tf.float32, tf.int32]
             )
 
     # create multiple readers to populate the Example Queue
