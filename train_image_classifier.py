@@ -36,7 +36,7 @@ def main(argv=None):
 
     with tf.Graph().as_default():
         with tf.device('/cpu:0'):
-            images, labels = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader)
+            images, labels = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader, FLAGS.num_preprocess_thread)
 
         with tf.Session() as sess:
             init_op = tf.global_variables_initializer()
