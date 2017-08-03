@@ -20,7 +20,7 @@ def get_files_name(dataset_dir):
 
     for f in os.listdir(dataset_dir):
         if 'train' in f:
-            file_names.append(f)
+            file_names.append(os.path.join(dataset_dir, f))
 
     return file_names
 
@@ -46,12 +46,14 @@ def parse_proto(serialized_example):
 def distort_input(dataset_dir, batch_size, num_reader):
     """
     """
+
+    # TODO: use tf.train.match_filenames_once
     file_names = get_files_name(dataset_dir)
 
     reader = tf.TFRecordReader()
 
     # create a queue that produces the filenames to read
-    file_queue = tf.train.string_input_producer(file_names)
+    file_queue = tf.train.string_input_producer([file_names])
 
     _, serialized_example = reader.read(file_queue)
     image, label = parse_proto(serialized_example)
