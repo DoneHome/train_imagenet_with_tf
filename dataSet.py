@@ -36,7 +36,7 @@ def parse_proto(serialized_example):
 
     image = features['image/encoded']
     image = tf.image.decode_jpeg(image, channels=3)
-    # Notice: if want to visulize the image, choose dtype: tf.unit8
+    # Notice: if want to visulize the image, choose dtype: tf.uint8
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
 
     label = tf.cast(features['image/class/label'], tf.int32)

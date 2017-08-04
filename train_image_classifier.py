@@ -8,7 +8,7 @@ import math
 import os
 import random
 import sys
-import cv2
+from PIL import Image
 
 import tensorflow as tf
 
@@ -47,7 +47,8 @@ def main(argv=None):
             for i in range(20):
                 example, l = sess.run([images,labels])
                 file_path = './'+str(i)+'_''Label_'+ str(l) +'.jpg'
-                cv2.imwrite(file_path, example)
+                img=Image.fromarray(example, 'RGB')
+                img.save(file_path)
             coord.request_stop()
             coord.join(threads)
 
