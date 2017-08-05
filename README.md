@@ -5,26 +5,27 @@ Train imagenet using tensorflow
 ##	 Overview
 
      This Project is used to train ILSVRC-2012 Dataset based on Alexnet. The key points mainly includes:
-     *	
-     * 
+
+     *
+     *
      * ...
 
 ##	 Installation Dependencies:
-	 *	##### Python2.7
-	 *	##### Tensorflow1.1.0
-	 *  ##### PIL
+	 * Python2.7
+	 * Tensorflow1.1.0
+	 * PIL
 
 ## Experiment:
-	 *	##### Training
+	 * Training
 	 
-	 *	##### Testing
+	 * Testing
 	 
 
 ##	 TODO
 
-     *	Image Augmentation 
-     *	Multi-thread Image Preprocessing (TF Queue)
-     *  ...
+     * Image Augmentation
+     * Multi-thread Image Preprocessing (TF Queue)
+     * ...
 
 
 ##	 Reference:
