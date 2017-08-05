@@ -57,17 +57,20 @@ def preprocess_image(image):
     """
     """
     # Resize Image
-    #image.set_shape([None, None, 3])
+    # TODO: Consider the origin aspect ratio
+    image.set_shape([None, None, 3])
     distorted_image = tf.image.resize_images(image, [256, 256])
     # Randomly crop a [height, width] section of the image.
     distorted_image = tf.random_crop(distorted_image, [IMAGE_SIZE, IMAGE_SIZE,3])
     # Randomly flip the image horizontally.
     distorted_image = tf.image.random_flip_left_right(distorted_image)
     # Randomly distort color
-    distorted_image = tf.image.random_brightness(distorted_image, max_delta=0.2)
-    distorted_image = tf.image.random_contrast(distorted_image, lower=0.5, upper=1.5)
+    #distorted_image = tf.image.random_brightness(distorted_image, max_delta=0.2)
+    #distorted_image = tf.image.random_contrast(distorted_image, lower=0.5, upper=1.5)
     # Subtract off the mean and divide by the variance of the pixels
-    distorted_image = tf.image.per_image_standardization(distorted_image)
+    #distorted_image = tf.image.per_image_standardization(distorted_image)
+
+    #distorted_image = tf.clip_by_value(distorted_image, 0.0, 1.0)
 
     return distorted_image
 
