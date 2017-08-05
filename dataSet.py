@@ -116,7 +116,7 @@ def distort_input(dataset_dir, batch_size, num_reader, num_preprocess_thread):
 
     #image = tf.image.convert_image_dtype(image, dtype=tf.uint8)
 
-    return image, label
+    return image_batch, label_batch
 
 
 
