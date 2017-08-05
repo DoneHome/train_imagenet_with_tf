@@ -2,13 +2,30 @@
 Train imagenet using tensorflow
 
 
-# PipeLine
+##	 Overview
 
-## The list of filenames
-## Filename queue
-## Readers for the file
-## Decoder for a record read by the reader
-## Example queue
+     This Project is used to train ILSVRC-2012 Dataset based on Alexnet. The key points mainly includes:
+     *	
+     * 
+     * ...
 
-# Reference:
-https://www.tensorflow.org/programmers_guide/reading_data
+##	 Installation Dependencies:
+	 *	##### Python2.7
+	 *	##### Tensorflow1.1.0
+	 *  ##### PIL
+
+## Experiment:
+	 *	##### Training
+	 
+	 *	##### Testing
+	 
+
+##	 TODO
+
+     *	Image Augmentation 
+     *	Multi-thread Image Preprocessing (TF Queue)
+     *  ...
+
+
+##	 Reference:
+	https://www.tensorflow.org/programmers_guide/reading_data

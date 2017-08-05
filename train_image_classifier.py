@@ -51,6 +51,7 @@ def main(argv=None):
                 file_path = './'+str(i)+'_''Label_'+ str(l[i]) +'.jpg'
                 img=Image.fromarray(example[i], 'RGB')
                 img.save(file_path)
+            return
 
             coord.request_stop()
             coord.join(threads)
