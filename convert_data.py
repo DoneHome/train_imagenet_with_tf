@@ -1,17 +1,5 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
+# coding:utf-8
+
 r"""Converts ImageNet data to TFRecords of TF-Example protos.
 
 This module reads the files that make up the ImageNet data and creates two TFRecord datasets: one for train
@@ -33,8 +21,6 @@ import sys
 
 import tensorflow as tf
 
-import data_utils 
-
 FLAGS = tf.app.flags.FLAGS
 
 # Seed for repeatability.
@@ -43,10 +29,44 @@ _RANDOM_SEED = 0
 # The number of shards per dataset split.
 _NUM_SHARDS = {'train':100, 'validation':10}
 
-
 tf.app.flags.DEFINE_string('dataset_dir', None, '')
 tf.app.flags.DEFINE_string('train_label_dir', None, '')
 tf.app.flags.DEFINE_string('val_label_dir', None, '')
+
+def int64_feature(values):
+  """Returns a TF-Feature of int64s.
+
+  Args:
+    values: A scalar or list of values.
+
+  Returns:
+    a TF-Feature.
+  """
+  if not isinstance(values, (tuple, list)):
+    values = [values]
+  return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
+
+
+def bytes_feature(values):
+  """Returns a TF-Feature of bytes.
+
+  Args:
+    values: A string.
+
+  Returns:
+    a TF-Feature.
+  """
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[values]))
+
+
+def image_to_tfexample(image_data, image_format, height, width, class_id):
+  return tf.train.Example(features=tf.train.Features(feature={
+      'image/encoded': bytes_feature(image_data),
+      'image/format': bytes_feature(image_format),
+      'image/class/label': int64_feature(class_id),
+      'image/height': int64_feature(height),
+      'image/width': int64_feature(width),
+  }))
 
 class ImageReader(object):
     """Helper class that provides TensorFlow image coding utilities."""
@@ -164,7 +184,7 @@ def _convert_dataset(split_name, filenames, class_names_to_ids, val_names_to_ids
                             class_id = val_names_to_ids[class_name]
                         #print(filenames[i],class_id)
 
-                        example = data_utils.image_to_tfexample(
+                        example = image_to_tfexample(
                             image_data, 'jpg', height, width, class_id)
                         tfrecord_writer.write(example.SerializeToString())
 
