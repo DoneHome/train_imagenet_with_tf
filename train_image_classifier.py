@@ -8,7 +8,6 @@ import math
 import os
 import random
 import sys
-from PIL import Image
 
 import tensorflow as tf
 
@@ -35,7 +34,6 @@ tf.app.flags.DEFINE_float('weight_decay', 0.00004, 'The weight decay on the mode
 tf.app.flags.DEFINE_float('adam_beta1', 0.9, 'The exponential decay rate for the 1st moment estimates.')
 tf.app.flags.DEFINE_float('adam_beta2', 0.999, 'The exponential decay rate for the 2nd moment estimates.')
 
-
 def main(argv=None):
     """ Train ImageNet for a number of steps. """
     if not FLAGS.dataset_dir:
@@ -60,13 +58,6 @@ def main(argv=None):
 
             summary_writer = tf.summary.FileWriter(FLAGS.train_dir, graph=sess.graph)
             summary_writer.add_summary(summary_str, 1)
-
-            N, H, W, C = example.shape
-            for i in range(N):
-                file_path = './'+str(i)+'_''Label_'+ str(l[i]) +'.jpg'
-                img=Image.fromarray(example[i], 'RGB')
-                img.save(file_path)
-            return
 
             coord.request_stop()
             coord.join(threads)
