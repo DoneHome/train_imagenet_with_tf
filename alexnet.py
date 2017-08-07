@@ -25,7 +25,7 @@ def max_pool(x, size, stride, padding):
     return tf.nn.max_pool(x, [1, stride[0], stride[1], 1], [1, stride[0], stride[1], 1], padding=padding)
 
 def lrn(x, radius, alpha, beta, bias=1.0):
-    return tf.nn.local_response_normalization(x, depth_radius=radius, alpha=alpha, beta=beta, bias=bias, name=name)
+    return tf.nn.local_response_normalization(x, depth_radius=radius, alpha=alpha, beta=beta, bias=bias)
 
 
 class AlexNet(object):
@@ -75,9 +75,11 @@ class AlexNet(object):
 
         with tf.name_scope('fc_layer') as fc_scope:
             with tf.name_scope('fc6') as scope:
-                flatten_input = tf.reshape(pool5, [-1, 6*6*256])
+                dim = pool5.get_shape().as_list()
+                flat_dim = dim[1] * dim[2] * dim[3]
+                flatten_input = tf.reshape(pool5, [-1, flat_dim])
 
-                w_fc6 = weight_init(shape=[6*6*256, 4096], stddev=0.01, name='w_fc6')
+                w_fc6 = weight_init(shape=[flat_dim, 4096], stddev=0.01, name='w_fc6')
                 b_fc6 = bias_init(0.0, [4096], 'b_fc6')
                 fc6 = tf.add(tf.matmul(flatten_input, w_fc6), b_fc6)
                 relu_fc6 = tf.nn.relu(fc6)
