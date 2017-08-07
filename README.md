@@ -12,7 +12,6 @@ This Project is used to train ILSVRC-2012 Dataset based on Alexnet. The key poin
 ##  Installation Dependencies
 * Python2.7
 * Tensorflow1.1.0
-* PIL
 
 ##  Experiment:
 * Training
