@@ -17,6 +17,7 @@ import dataSet as DataProvider
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string('dataset_dir', None, 'The directory where the dataset files are stored.')
+tf.app.flags.DEFINE_string('train_dir', None, 'The directory where the event logs and checkpoint are stored.')
 tf.app.flags.DEFINE_integer("start_gpu_device", 0, 'The start gpu device index')
 tf.app.flags.DEFINE_integer('eval_gpu_device', 0, 'The gpu device used for eval')
 tf.app.flags.DEFINE_integer('num_gpus', 1, 'The number of gpus used for training')
@@ -45,6 +46,8 @@ def main(argv=None):
         with tf.device('/cpu:0'):
             image_batch, label_batch = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader, FLAGS.num_preprocess_thread)
 
+        merged_summary = tf.summary.merge_all()
+        summary_writer = tf.summary.FileWriter(FLAGS.train_dir, graph=sess.graph)
 
         with tf.Session() as sess:
             init_op = tf.global_variables_initializer()
@@ -54,6 +57,10 @@ def main(argv=None):
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             example, l = sess.run([image_batch, label_batch])
+            summary_str = sess.run(merged_summary)
+
+            summary_writer.add_summary(summary_str, 1)
+
             N, H, W, C = example.shape
             for i in range(N):
                 file_path = './'+str(i)+'_''Label_'+ str(l[i]) +'.jpg'
