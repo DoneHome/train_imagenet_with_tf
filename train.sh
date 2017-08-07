@@ -19,6 +19,7 @@ CUDA_VISIBLE_DEVICES=3 python convert_data.py \
 # Train model
 CUDA_VISIBLE_DEVICES=3 python train_image_classifier.py \
   --dataset_dir='/data/donghao1/project/imagenet/images' \
+  --train_dir='/data/donghao1/project/train_imagenet_with_tf/log'
 
 # Evaluate model
 #CUDA_VISIBLE_DEVICES=0 python eval_image_classifier.py --conf=conf/eval.conf

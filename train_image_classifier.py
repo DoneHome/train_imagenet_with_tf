@@ -47,7 +47,6 @@ def main(argv=None):
             image_batch, label_batch = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader, FLAGS.num_preprocess_thread)
 
         merged_summary = tf.summary.merge_all()
-        summary_writer = tf.summary.FileWriter(FLAGS.train_dir, graph=sess.graph)
 
         with tf.Session() as sess:
             init_op = tf.global_variables_initializer()
@@ -59,6 +58,7 @@ def main(argv=None):
             example, l = sess.run([image_batch, label_batch])
             summary_str = sess.run(merged_summary)
 
+            summary_writer = tf.summary.FileWriter(FLAGS.train_dir, graph=sess.graph)
             summary_writer.add_summary(summary_str, 1)
 
             N, H, W, C = example.shape
