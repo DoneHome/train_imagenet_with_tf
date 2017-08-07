@@ -93,9 +93,9 @@ class AlexNet(object):
             with tf.name_scope('softmax') as scope:
                 w_softmax = weight_init(shape=[4096,  1000], stddev=0.01, name='w_softmax')
                 b_softmax = bias_init(0.0, [1000], 'b_softmax')
-                scores = tf.add(tf.matmul(dropout_fc7, w_softmax), b_softmax)
-                output = tf.nn.softmax(scores)
+                fc8 = tf.add(tf.matmul(dropout_fc7, w_softmax), b_softmax)
+                output = tf.nn.softmax(fc8)
 
-        return output
+        return fc8, output
 
 
