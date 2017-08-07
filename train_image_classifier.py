@@ -33,6 +33,7 @@ tf.app.flags.DEFINE_integer('batch_size', 50, 'The number of batch to train in o
 tf.app.flags.DEFINE_integer('num_epochs', 10, 'The number of epochs to run')
 tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate')
 tf.app.flags.DEFINE_float('weight_decay', 0.00004, 'The weight decay on the model weights')
+tf.app.flags.DEFINE_float('drop_out', 0.75, '')
 
 tf.app.flags.DEFINE_float('adam_beta1', 0.9, 'The exponential decay rate for the 1st moment estimates.')
 tf.app.flags.DEFINE_float('adam_beta2', 0.999, 'The exponential decay rate for the 2nd moment estimates.')
@@ -48,7 +49,9 @@ def main(argv=None):
         with tf.device('/cpu:0'):
             image_batch, label_batch = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader, FLAGS.num_preprocess_thread)
         # Build a Graph that computes the logits predictions from the alextnet model
-        logits, _ = AlexNet.train(image_batch)
+        logits, _ = AlexNet.train(
+            x = image_batch, keep_prob = FLAGS.drop_out,
+            weight_decay = FLAGS.weight_decay)
         #labels = tf.one_hot(label_batch, FLAGS.num_class)
 
         with tf.name_scope('cross_entropy'):

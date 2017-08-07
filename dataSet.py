@@ -12,6 +12,10 @@ import sys
 import tensorflow as tf
 
 IMAGE_SIZE=224
+NUM_CLASS=1000
+TRAIN_DATASET_SIZE=1281167
+VALIDATION_DATASET_SIZE=50000
+
 
 def get_files_name(dataset_dir):
     """

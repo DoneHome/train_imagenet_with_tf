@@ -31,10 +31,10 @@ def lrn(x, radius, alpha, beta, bias=1.0):
 class AlexNet(object):
 
     def __init__(self):
-        self.keep_prob= 0.75
         pass
 
-    def train(self, x):
+    @staticmethod
+    def train(x, keep_prob, weight_decay):
         """
         """
         with tf.name_scope('conv_net') as conv_scope:
@@ -81,14 +81,14 @@ class AlexNet(object):
                 b_fc6 = bias_init(0.0, [4096], 'b_fc6')
                 fc6 = tf.add(tf.matmul(flatten_input, w_fc6), b_fc6)
                 relu_fc6 = tf.nn.relu(fc6)
-                dropout_fc6 = tf.nn.dropout(relu_fc6, self.keep_prob)
+                dropout_fc6 = tf.nn.dropout(relu_fc6, keep_prob)
 
             with tf.name_scope('fc7') as scope:
                 w_fc7 = weight_init(shape=[4096,  4096], stddev=0.01, name='w_fc7')
                 b_fc7 = bias_init(0.0, [4096], 'b_fc7')
                 fc7 = tf.add(tf.matmul(dropout_fc6, w_fc7), b_fc7)
                 relu_fc7 = tf.nn.relu(fc7)
-                dropout_fc7 = tf.nn.dropout(relu_fc7, self.keep_prob)
+                dropout_fc7 = tf.nn.dropout(relu_fc7, keep_prob)
 
             with tf.name_scope('softmax') as scope:
                 w_softmax = weight_init(shape=[4096,  1000], stddev=0.01, name='w_softmax')
