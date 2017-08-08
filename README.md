@@ -21,6 +21,7 @@ This Project is used to train ILSVRC-2012 Dataset based on Alexnet. The key poin
 ##  TODO
 * Image Augmentation
 * Multi-thread Image Preprocessing (TF Queue)
+* Add learning rate decay methods (Polynomial, fixed)
 * ...
 
 
