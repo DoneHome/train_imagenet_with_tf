@@ -25,10 +25,7 @@ CUDA_VISIBLE_DEVICES=3 python train_image_classifier.py \
   --learning_rate=0.001 \
   --weight_decay=0.00004 \
   --log_every_n_steps=10 \
-  --save_model_steps=5000 \
-
-
-
+  --save_model_steps=5000
 
 # Evaluate model
 #CUDA_VISIBLE_DEVICES=0 python eval_image_classifier.py --conf=conf/eval.conf

@@ -46,6 +46,38 @@ tf.app.flags.DEFINE_float('adam_beta2', 0.999, 'The exponential decay rate for t
 tf.app.flags.DEFINE_integer('log_every_n_steps', 10, 'The frequency with which logs are print.')
 tf.app.flags.DEFINE_integer('save_model_steps', 1000, 'The frequency with which the model checkpoint are save.')
 
+def _configure_session():
+    """
+    """
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.log_device_placement = True
+
+    return config
+
+def _configure_learning_rate(global_step):
+    """
+    """
+    # Variables that affect learning rate
+    num_batches_per_epoch = DataProvider.TRAIN_DATASET_SIZE / FLAGS.batch_size
+    decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
+
+    # Decay the learning rate exponentially based on the number of steps.
+    # TODO: add polynomial, fixed, etc.
+    learning_rate = tf.train.exponential_decay(FLAGS.learning_rate,
+            global_step,
+            decay_steps,
+            FLAGS.learning_rate_decay_factor,
+            staircase=True)
+    tf.summary.scalar('learning_rate', learning_rate)
+
+    return learning_rate
+
+def _configure_optimizer(learning_rate):
+    """
+    """
+    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=FLAGS.momentum)
+    return optimizer
 
 def main(argv=None):
     """ Train ImageNet for a number of steps. """
@@ -53,7 +85,9 @@ def main(argv=None):
         raise ValueError('You must supply the dataset directory with --dataset_dir')
 
     with tf.Graph().as_default():
-        global_step = tf.contrib.framework.get_or_create_global_step()
+        global_step = tf.get_variable(
+            'global_step', [],
+            initializer=tf.constant_initializer(0), trainable=False)
 
         # Force all input processing onto CPU in order to reserve the GPU for the forward inference and back-propagation.
         with tf.device('/cpu:0'):
@@ -71,21 +105,11 @@ def main(argv=None):
             # The total loss is defined as the cross entropy loss plus all of the weight decay terms (L2 loss).
             total_loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
 
-        # Variables that affect learning rate
-        num_batches_per_epoch = DataProvider.TRAIN_DATASET_SIZE / FLAGS.batch_size
-        decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
-
-        # Decay the learning rate exponentially based on the number of steps.
-        # TODO: add polynomial, fixed, etc.
-        lr = tf.train.exponential_decay(FLAGS.learning_rate,
-                global_step,
-                decay_steps,
-                FLAGS.learning_rate_decay_factor,
-                staircase=True)
-        tf.summary.scalar('learning_rate', lr)
+        learning_rate = _configure_learning_rate(global_step)
 
         with tf.name_scope('optimizer'):
-            optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=FLAGS.momentum).minimize(loss=total_loss, global_step=global_step)
+            optimizer = _configure_optimizer(learning_rate)
+            optimizer.minimize(loss=total_loss, global_step=global_step)
 
         with tf.name_scope('accuracy'):
             correct = tf.equal(tf.argmax(logits, 1), tf.argmax(label_batch, 1))
@@ -99,7 +123,7 @@ def main(argv=None):
 
         init_op = tf.global_variables_initializer()
 
-        config = tf.ConfigProto()
+        config = _configure_session()
 
         with tf.Session(config=config) as sess:
             sess.run(init_op)
