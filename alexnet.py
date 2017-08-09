@@ -12,7 +12,7 @@ import sys
 import tensorflow as tf
 
 
-def weight_init(shape, stddev, weight_decay=None, name):
+def weight_init(shape, stddev, weight_decay, name):
     weight = tf.Variable(tf.truncated_normal(shape=shape, stddev=stddev, dtype=tf.float32), name=name)
     if weight_decay is not None:
         l2_loss = tf.multiply(tf.nn.l2_loss(weight), weight_decay, name='l2_loss')
@@ -83,21 +83,21 @@ class AlexNet(object):
                 flat_dim = dim[1] * dim[2] * dim[3]
                 flatten_input = tf.reshape(pool5, [-1, flat_dim])
 
-                w_fc6 = weight_init(shape=[flat_dim, 4096], stddev=0.01, weight_decay, name='w_fc6')
+                w_fc6 = weight_init([flat_dim, 4096], 0.01, weight_decay, 'w_fc6')
                 b_fc6 = bias_init(1.0, [4096], 'b_fc6')
                 fc6 = tf.add(tf.matmul(flatten_input, w_fc6), b_fc6)
                 relu_fc6 = tf.nn.relu(fc6)
                 dropout_fc6 = tf.nn.dropout(relu_fc6, keep_prob)
 
             with tf.name_scope('fc7') as scope:
-                w_fc7 = weight_init(shape=[4096,  4096], stddev=0.01, weight_decay, name='w_fc7')
+                w_fc7 = weight_init([4096,  4096], 0.01, weight_decay, 'w_fc7')
                 b_fc7 = bias_init(1.0, [4096], 'b_fc7')
                 fc7 = tf.add(tf.matmul(dropout_fc6, w_fc7), b_fc7)
                 relu_fc7 = tf.nn.relu(fc7)
                 dropout_fc7 = tf.nn.dropout(relu_fc7, keep_prob)
 
             with tf.name_scope('softmax') as scope:
-                w_softmax = weight_init(shape=[4096,  1000], stddev=0.01, weight_decay, name='w_softmax')
+                w_softmax = weight_init([4096,  1000], 0.01, weight_decay, 'w_softmax')
                 b_softmax = bias_init(1.0, [1000], 'b_softmax')
                 fc8 = tf.add(tf.matmul(dropout_fc7, w_softmax), b_softmax)
                 output = tf.nn.softmax(fc8)
