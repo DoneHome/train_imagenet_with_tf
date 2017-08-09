@@ -102,10 +102,10 @@ def main(argv=None):
             weight_decay = FLAGS.weight_decay)
 
 
-        num_batches_per_epoch = DataProvider.TRAIN_DATASET_SIZE / FLAGS.batch_size
+        num_batches_per_epoch = int(DataProvider.TRAIN_DATASET_SIZE / FLAGS.batch_size)
 
         with tf.name_scope('learning_rate'):
-            learning_rate = _configure_learning_rate(global_step)
+            learning_rate = _configure_learning_rate(num_batches_per_epoch, global_step)
             tf.summary.scalar('learning_rate', learning_rate)
 
         with tf.name_scope('cross_entropy'):
@@ -123,10 +123,10 @@ def main(argv=None):
             grads = optimizer.compute_gradients(total_loss)
             apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
 
-        with tf.name_scope('accuracy'):
-            correct = tf.equal(tf.argmax(logits, 1), tf.argmax(label_batch, 1))
-            accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-            tf.summary.scalar('accuracy', accuracy)
+        #with tf.name_scope('accuracy'):
+        #    correct = tf.equal(tf.argmax(logits, 1), tf.argmax(label_batch, 1))
+        #    accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+        #    tf.summary.scalar('accuracy', accuracy)
 
         # Add histograms for trainable variables.
         for var in tf.trainable_variables():
@@ -154,26 +154,26 @@ def main(argv=None):
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
             summary_writer = tf.summary.FileWriter(FLAGS.train_dir, graph=sess.graph)
 
-            max_steps = FLAGS.num_epochs * num_batches_per_epoch
+            max_steps = int(FLAGS.num_epochs * num_batches_per_epoch)
 
             for step in xrange(max_steps):
                 start_time = time.time()
-                _, total_loss = sess.run([train_op, total_loss])
+                _, loss_value = sess.run([train_op, total_loss])
                 duration = time.time() - start_time
 
-                if step % FLAGS.log_every_n_steps:
+                if step % FLAGS.log_every_n_steps == 0:
                     examples_per_sec = FLAGS.batch_size / duration
                     sec_per_batch = duration
                     epoch = step / num_batches_per_epoch + 1
-                    format_str = ('%s: Epoch %d  Step %d,  Loss = %.2f  (%.1f examples/sec; %.3f sec/batch)')
-                    print(format_str % (datetime.now(), epoch, step, total_loss, examples_per_sec, sec_per_batch))
+                    format_str = ('%s: Epoch %d  Step %d,  Total_loss = %.2f  (%.1f examples/sec; %.3f sec/batch)')
+                    print(format_str % (datetime.now(), epoch, step, loss_value, examples_per_sec, sec_per_batch))
 
-                if step % FLAGS.save_summaries_steps:
+                if step % FLAGS.save_summaries_steps == 0:
                     # Visual Training Process
                     summary_str = sess.run(summary_op)
                     summary_writer.add_summary(summary_str, step)
 
-                if step % FLAGS.save_model_steps:
+                if step % FLAGS.save_model_steps == 0:
                     checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
 
