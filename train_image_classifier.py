@@ -58,11 +58,10 @@ def _configure_session():
 
     return config
 
-def _configure_learning_rate(global_step):
+def _configure_learning_rate(num_batches_per_epoch, global_step):
     """
     """
     # Variables that affect learning rate
-    num_batches_per_epoch = DataProvider.TRAIN_DATASET_SIZE / FLAGS.batch_size
     decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
 
     # Decay the learning rate exponentially based on the number of steps.
@@ -102,6 +101,9 @@ def main(argv=None):
             x = image_batch, keep_prob = FLAGS.drop_out,
             weight_decay = FLAGS.weight_decay)
 
+
+        num_batches_per_epoch = DataProvider.TRAIN_DATASET_SIZE / FLAGS.batch_size
+
         with tf.name_scope('learning_rate'):
             learning_rate = _configure_learning_rate(global_step)
             tf.summary.scalar('learning_rate', learning_rate)
@@ -119,7 +121,7 @@ def main(argv=None):
         with tf.name_scope('optimizer'):
             optimizer = _configure_optimizer(learning_rate)
             grads = optimizer.compute_gradients(total_loss)
-            apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
+            apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
 
         with tf.name_scope('accuracy'):
             correct = tf.equal(tf.argmax(logits, 1), tf.argmax(label_batch, 1))
