@@ -118,14 +118,12 @@ def main(argv=None):
         with tf.name_scope('optimizer'):
             optimizer = _configure_optimizer(learning_rate)
             grads = optimizer.compute_gradients(total_loss)
+            apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
 
         with tf.name_scope('accuracy'):
             correct = tf.equal(tf.argmax(logits, 1), tf.argmax(label_batch, 1))
             accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
             tf.summary.scalar('accuracy', accuracy)
-
-        # Apply gradients
-        apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
 
         # Add histograms for trainable variables.
         for var in tf.trainable_variables():
