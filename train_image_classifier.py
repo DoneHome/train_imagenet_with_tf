@@ -32,19 +32,20 @@ tf.app.flags.DEFINE_integer('num_class', 1000, 'The number of classes for the Im
 tf.app.flags.DEFINE_string('optimizer', 'adam', 'The name of the optimizer, one of "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd" or "rmsprop"')
 tf.app.flags.DEFINE_integer('batch_size', 128, 'The number of batch to train in one iteration')
 tf.app.flags.DEFINE_integer('num_epochs', 10, 'The number of epochs to run')
-tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate')
-tf.app.flags.DEFINE_float('weight_decay', 0.00004, 'The weight decay on the model weights')
+tf.app.flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate')
+tf.app.flags.DEFINE_float('weight_decay', 0.0005, 'The weight decay on the model weights')
 tf.app.flags.DEFINE_float('drop_out', 0.75, '')
+tf.app.flags.DEFINE_integer('log_every_n_steps', 10, 'The frequency with which logs are print.')
+tf.app.flags.DEFINE_integer('save_model_steps', 1000, 'The frequency with which the model checkpoint are save.')
 
+# fixed parameter
 tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.94, 'Learning rate decay factor.')
 tf.app.flags.DEFINE_float('num_epochs_per_decay', 2.0, 'Number of epochs after which learning rate decays.')
-
 tf.app.flags.DEFINE_float('momentum', 0.9, 'The momentum for the MomentumOptimizer and RMSPropOptimizer.')
 tf.app.flags.DEFINE_float('adam_beta1', 0.9, 'The exponential decay rate for the 1st moment estimates.')
 tf.app.flags.DEFINE_float('adam_beta2', 0.999, 'The exponential decay rate for the 2nd moment estimates.')
+tf.app.flags.DEFINE_float('moving_average_decay', 0.9, 'The decay to use for the moving average.')
 
-tf.app.flags.DEFINE_integer('log_every_n_steps', 10, 'The frequency with which logs are print.')
-tf.app.flags.DEFINE_integer('save_model_steps', 1000, 'The frequency with which the model checkpoint are save.')
 
 def _configure_session():
     """
@@ -52,6 +53,7 @@ def _configure_session():
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     config.log_device_placement = True
+    config.allow_soft_placement = True
 
     return config
 
@@ -69,7 +71,6 @@ def _configure_learning_rate(global_step):
             decay_steps,
             FLAGS.learning_rate_decay_factor,
             staircase=True)
-    tf.summary.scalar('learning_rate', learning_rate)
 
     return learning_rate
 
@@ -79,10 +80,13 @@ def _configure_optimizer(learning_rate):
     optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=FLAGS.momentum)
     return optimizer
 
+
 def main(argv=None):
     """ Train ImageNet for a number of steps. """
     if not FLAGS.dataset_dir:
         raise ValueError('You must supply the dataset directory with --dataset_dir')
+    if not FLAGS.train_dir:
+        raise ValueError('You must supply the dataset directory with --train_dir')
 
     with tf.Graph().as_default():
         global_step = tf.get_variable(
@@ -97,37 +101,55 @@ def main(argv=None):
             x = image_batch, keep_prob = FLAGS.drop_out,
             weight_decay = FLAGS.weight_decay)
 
+        with tf.name_scope('learning_rate'):
+            learning_rate = _configure_learning_rate(global_step)
+            tf.summary.scalar('learning_rate', learning_rate)
+
         with tf.name_scope('cross_entropy'):
             cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                 logits=logits, labels=label_batch)
             cross_entropy_mean = tf.reduce_mean(cross_entropy, name="cross_entropy")
             tf.add_to_collection('losses', cross_entropy_mean)
+
+        with tf.name_scope('total_loss'):
             # The total loss is defined as the cross entropy loss plus all of the weight decay terms (L2 loss).
             total_loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
 
-        learning_rate = _configure_learning_rate(global_step)
-
         with tf.name_scope('optimizer'):
             optimizer = _configure_optimizer(learning_rate)
-            optimizer.minimize(loss=total_loss, global_step=global_step)
+            grads = optimizer.compute_gradients(total_loss)
 
         with tf.name_scope('accuracy'):
             correct = tf.equal(tf.argmax(logits, 1), tf.argmax(label_batch, 1))
             accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
             tf.summary.scalar('accuracy', accuracy)
 
-        merged_summary = tf.summary.merge_all()
+        # Apply gradients
+        apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
 
-        coord = tf.train.Coordinator()
+        # Add histograms for trainable variables.
+        for var in tf.trainable_variables():
+            tf.summary.histogram(var.op.name, var)
+
+        # Add histograms for gradients.
+        for grad, var in grads:
+            if grad is not None:
+                tf.summary.histogram(var.op.name + '/gradients', grad)
+
+        # Track the moving averages of all trainable variables.
+        variable_averages = tf.train.ExponentialMovingAverage(FLAGS.moving_average_decay, global_step)
+        variables_averages_op = variable_averages.apply(tf.trainable_variables())
+        
+        train_op = tf.group(apply_gradient_op, variables_averages_op)
+
+        summary_op = tf.summary.merge_all()
         saver = tf.train.Saver()
-
         init_op = tf.global_variables_initializer()
 
-        config = _configure_session()
-
-        with tf.Session(config=config) as sess:
+        with tf.Session(config=_configure_session()) as sess:
             sess.run(init_op)
 
+            coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
             summary_writer = tf.summary.FileWriter(FLAGS.train_dir, graph=sess.graph)
 
@@ -145,15 +167,13 @@ def main(argv=None):
                     format_str = ('%s: Epoch %d  Step %d,  Loss = %.2f  Training_accuracy: %.7f  (%.1f examples/sec; %.3f sec/batch)')
                     print(format_str % (datetime.now(), epoch, step, total_loss, acc, examples_per_sec, sec_per_batch))
 
+                    # Visual Training Process
+                    summary_str = sess.run(summary_op)
+                    summary_writer.add_summary(summary_str, step)
+
                 if step % FLAGS.save_model_steps:
                     checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=step)
-
-
-            example, l = sess.run([image_batch, label_batch])
-            summary_str = sess.run(merged_summary)
-
-            summary_writer.add_summary(summary_str, 1)
 
             coord.request_stop()
             coord.join(threads)
