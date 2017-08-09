@@ -36,6 +36,7 @@ tf.app.flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate')
 tf.app.flags.DEFINE_float('weight_decay', 0.0005, 'The weight decay on the model weights')
 tf.app.flags.DEFINE_float('drop_out', 0.75, '')
 tf.app.flags.DEFINE_integer('log_every_n_steps', 10, 'The frequency with which logs are print.')
+tf.app.flags.DEFINE_integer('save_summaries_steps', 100, 'The frequency with which summary are save.')
 tf.app.flags.DEFINE_integer('save_model_steps', 1000, 'The frequency with which the model checkpoint are save.')
 
 # fixed parameter
@@ -155,16 +156,17 @@ def main(argv=None):
 
             for step in xrange(max_steps):
                 start_time = time.time()
-                acc, total_loss = sess.run([accuracy, total_loss])
+                _, total_loss = sess.run([train_op, total_loss])
                 duration = time.time() - start_time
 
                 if step % FLAGS.log_every_n_steps:
                     examples_per_sec = FLAGS.batch_size / duration
                     sec_per_batch = duration
                     epoch = step / num_batches_per_epoch + 1
-                    format_str = ('%s: Epoch %d  Step %d,  Loss = %.2f  Training_accuracy: %.7f  (%.1f examples/sec; %.3f sec/batch)')
-                    print(format_str % (datetime.now(), epoch, step, total_loss, acc, examples_per_sec, sec_per_batch))
+                    format_str = ('%s: Epoch %d  Step %d,  Loss = %.2f  (%.1f examples/sec; %.3f sec/batch)')
+                    print(format_str % (datetime.now(), epoch, step, total_loss, examples_per_sec, sec_per_batch))
 
+                if step % FLAGS.save_summaries_steps:
                     # Visual Training Process
                     summary_str = sess.run(summary_op)
                     summary_writer.add_summary(summary_str, step)
