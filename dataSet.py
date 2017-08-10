@@ -16,6 +16,20 @@ NUM_CLASS=1000
 TRAIN_DATASET_SIZE=1281167
 VALIDATION_DATASET_SIZE=50000
 
+class ImagenetData():
+    """ ImageNet data set. """
+
+    def __init__(self, subset):
+        self.subset = subset
+
+    def num_classes(self):
+        return 1000
+
+    def num_examples_per_epoch(self):
+        if self.subset == 'train':
+            return 1281167
+        if self.subset == 'validation':
+            return 50000
 
 def get_files_name(dataset_dir):
     """
@@ -77,7 +91,7 @@ def preprocess_image(image):
 
     return distorted_image
 
-def distort_input(dataset_dir, batch_size, num_reader, num_preprocess_thread):
+def distort_input(dataset_dir, batch_size, num_reader, num_preprocess_thread, is_train=False):
     """
     """
     with tf.name_scope('batch_processing'):
@@ -85,39 +99,54 @@ def distort_input(dataset_dir, batch_size, num_reader, num_preprocess_thread):
         file_names = get_files_name(dataset_dir)
 
         # create a queue that produces the filenames to read
-        file_queue = tf.train.string_input_producer(file_names)
+        if is_train:
+            file_queue = tf.train.string_input_producer(file_names, shuffle=True, capacity=32)
+        else:
+            file_queue = tf.train.string_input_producer(file_names, shuffle=False, capacity=1)
 
         # create a queue that stores the files that read by readers
-        example_queue = tf.RandomShuffleQueue(
+        if is_train:
+            example_queue = tf.RandomShuffleQueue(
                 capacity = 20 * batch_size,
                 min_after_dequeue = 3 * batch_size,
                 dtypes = [tf.string]
                 )
+        else:
+            examples_queue = tf.FIFOQueue(
+                capacity = 3 * batch_size
+                dtypes = [tf.string])
 
         # create multiple readers to populate the Example Queue
-        enqueue_ops = []
+        if num_reader > 1:
+            enqueue_ops = []
+            for i in range(num_reader):
+                serialized_example = read_my_file_format(file_queue)
+                enqueue_ops.append(example_queue.enqueue([serialized_example]))
 
-        for i in range(num_reader):
+            tf.train.queue_runner.add_queue_runner(
+                tf.train.queue_runner.QueueRunner(example_queue, enqueue_ops))
+            serialized_example = example_queue.dequeue()
+        else:
             serialized_example = read_my_file_format(file_queue)
-            enqueue_ops.append(example_queue.enqueue([serialized_example]))
-
-        tf.train.queue_runner.add_queue_runner(
-            tf.train.queue_runner.QueueRunner(example_queue, enqueue_ops))
-
-        serialized_example = example_queue.dequeue()
 
         # create multiple threads to preprocess the image
-        example_list = []
+        images_and_labels = []
         for i in range(num_preprocess_thread):
             image, label = parse_proto(serialized_example)
             image = preprocess_image(image)
-            example_list.append([image, label])
+            images_and_labels.append([image, label])
 
         image_batch, label_batch = tf.train.batch_join(
-                tensors_list = example_list,
+                tensors_list = images_and_labels,
                 batch_size = batch_size,
                 capacity = 2 * num_preprocess_thread * batch_size
                 )
+
+        height = IMAGE_SIZE
+        width = IMAGE_SIZE
+
+        image_batch = tf.cast(image_batch, tf.float32)
+        image_batch = tf.reshape(image_batch, shape=[batch_size, height, width, 3])
 
         #image_batch = tf.image.convert_image_dtype(image_batch, dtype=tf.uint8)
         tf.summary.image('images', image_batch)

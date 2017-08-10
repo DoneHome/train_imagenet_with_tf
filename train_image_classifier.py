@@ -87,6 +87,8 @@ def main(argv=None):
         raise ValueError('You must supply the dataset directory with --dataset_dir')
     if not FLAGS.train_dir:
         raise ValueError('You must supply the dataset directory with --train_dir')
+    if not FLAGS.num_reader:
+        raise ValueError('Please make num_readers at least 1')
 
     with tf.Graph().as_default():
         global_step = tf.get_variable(
@@ -95,7 +97,7 @@ def main(argv=None):
 
         # Force all input processing onto CPU in order to reserve the GPU for the forward inference and back-propagation.
         with tf.device('/cpu:0'):
-            image_batch, label_batch = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader, FLAGS.num_preprocess_thread)
+            image_batch, label_batch = DataProvider.distort_input(FLAGS.dataset_dir, FLAGS.batch_size, FLAGS.num_reader, FLAGS.num_preprocess_thread, is_train=True)
         # Build a Graph that computes the logits predictions from the alextnet model
         logits, _ = AlexNet.train(
             x = image_batch, keep_prob = FLAGS.drop_out,
@@ -165,7 +167,7 @@ def main(argv=None):
                     examples_per_sec = FLAGS.batch_size / duration
                     sec_per_batch = duration
                     epoch = step / num_batches_per_epoch + 1
-                    format_str = ('%s: Epoch %d  Step %d,  Total_loss = %.2f  (%.1f examples/sec; %.3f sec/batch)')
+                    format_str = ('%s: Epoch %d  Step %d  Total_loss = %.2f  (%.1f examples/sec; %.3f sec/batch)')
                     print(format_str % (datetime.now(), epoch, step, loss_value, examples_per_sec, sec_per_batch))
 
                 if step % FLAGS.save_summaries_steps == 0:
